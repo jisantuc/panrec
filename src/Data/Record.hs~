@@ -1,0 +1,7 @@
+module Data.Record where
+
+data Casing = Camel | Snake | Upper | Lower deriving (Eq, Show)
+
+class Record a where
+  funcKeyword :: a -> String
+  casing :: a -> Casing

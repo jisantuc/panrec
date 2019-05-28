@@ -1,0 +1,7 @@
+module Data.Scala where
+
+import Data.Record (Record, Casing(..))
+
+data CaseClass = CaseClass
+
+instance Record CaseClass where
