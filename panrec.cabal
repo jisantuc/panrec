@@ -17,10 +17,14 @@ library
   hs-source-dirs:      src
   ghc-options:         -Wall
   exposed-modules:     Lib
+                     , Data.Parsers
                      , Data.Scala
                      , Data.Record
   build-depends:       base >= 4.7 && < 5
+                     , attoparsec
+                     , bytestring
   default-language:    Haskell2010
+  default-extensions:  OverloadedStrings
 
 executable panrec-exe
   hs-source-dirs:      app
@@ -38,10 +42,14 @@ test-suite panrec-test
                      , panrec
                      , hspec >= 2.7.1 && < 2.8.0
                      , QuickCheck >= 2.13.1 && < 2.14
+                     , bytestring
+                     , raw-strings-qq
   other-modules:       Types
 
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
+  default-extensions:  QuasiQuotes
+                     , OverloadedStrings
 
 source-repository head
   type:     git

@@ -29,6 +29,8 @@ class Record a where
   typing :: a -> Bool
   -- | Records must provide a way to access their fields
   fields :: a -> [String]
+  -- | Record smust provide a way to access their names
+  name :: a -> String
   -- | Build this type from another record
   fromRecord :: Record b => b -> a
 

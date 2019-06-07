@@ -8,4 +8,5 @@ newtype TestCaseClass = TestCaseClass CaseClass deriving (Show)
 instance Arbitrary TestCaseClass where
   arbitrary = do
     fs <- arbitrary
-    return . TestCaseClass $ CaseClass fs
+    nm <- arbitrary
+    return . TestCaseClass $ CaseClass fs nm
