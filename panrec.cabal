@@ -18,8 +18,9 @@ library
   ghc-options:         -Wall
   exposed-modules:     Lib
                      , Data.Parsers
-                     , Data.Scala
                      , Data.Record
+                     , Data.Scala
+                     , Data.Typescript
   build-depends:       base >= 4.7 && < 5
                      , attoparsec
                      , bytestring

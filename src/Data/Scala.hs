@@ -42,12 +42,12 @@ fieldParser = do
 caseClassParser :: Parser CaseClass
 caseClassParser = do
   skipMany space
-  _ <- string "case class" <* many' endOfLineOrSpace
+  _ <- "case class" <* skipSpace
   recordName <- many' letterOrDigit
   _ <- char '('
-  skipMany endOfLineOrSpace
+  skipSpace
   recordFields <- many' (fieldParser)
-  skipMany endOfLineOrSpace
+  skipSpace
   return $ CaseClass (fst <$> recordFields) recordName
 
 parseField :: ByteString -> Either String (String, String)
