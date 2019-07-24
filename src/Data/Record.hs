@@ -1,12 +1,6 @@
 module Data.Record where
 
-data Casing = Camel
-  | UpperCamel
-  | Snake
-  | UpperSnake
-  | Upper
-  | Lower
-  deriving (Eq, Show)
+import           Data.Casing
 
 -- | Record is a generic container for things that have constructors,
 -- have fields, and know things about the style patterns of the language
@@ -34,16 +28,6 @@ class Record a where
   -- | Build this type from another record
   fromRecord :: Record b => b -> a
 
--- | With a particular casing style, create a single string from
--- the component parts of a string
-caseParts :: Casing -> [String] -> String
-caseParts = undefined
-
--- | With a particular casing style, split a single string into
--- its component parts
-splitStringParts :: Casing -> String -> [String]
-splitStringParts = undefined
-
 -- | Translate a string in one casing into a string in another
 reCase :: Casing -> Casing -> String -> String
-reCase casingIn casingOut = caseParts casingOut . splitStringParts casingIn
+reCase casingIn casingOut = joinParts casingOut . splitParts casingIn

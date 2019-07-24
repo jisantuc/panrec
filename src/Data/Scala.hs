@@ -9,8 +9,9 @@ module Data.Scala (
 import           Control.Applicative              ((<|>))
 import           Data.Attoparsec.ByteString.Char8
 import           Data.ByteString                  (ByteString)
+import           Data.Casing
 import           Data.Parsers
-import           Data.Record                      (Casing (..), Record (..))
+import           Data.Record                      (Record (..))
 
 data CaseClass = CaseClass { _fields :: [String]
                            , _name   :: String } deriving (Eq, Show)

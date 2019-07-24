@@ -17,6 +17,7 @@ library
   hs-source-dirs:      src
   ghc-options:         -Wall
   exposed-modules:     Lib
+                     , Data.Casing
                      , Data.Parsers
                      , Data.Record
                      , Data.Scala

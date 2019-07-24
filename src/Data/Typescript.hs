@@ -9,7 +9,8 @@ import           Data.Attoparsec.ByteString.Char8
 import           Data.ByteString                  (ByteString)
 import           Data.Parsers
 
-import           Data.Record                      (Casing (..), Record (..))
+import           Data.Casing
+import           Data.Record                      (Record (..))
 
 data Class = Class { _fields :: [String]
                    , _name   :: String } deriving (Eq, Show)
