@@ -16,8 +16,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   ghc-options:         -Wall
-  exposed-modules:     Lib
-                     , Data.Casing
+  exposed-modules:     Data.Casing
                      , Data.Parsers
                      , Data.Record
                      , Data.Scala
@@ -28,12 +27,14 @@ library
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
 
-executable panrec-exe
+executable panrec
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , panrec
+                     , bytestring
+                     , optparse-applicative >= 0.14.3 && < 0.15.0
   default-language:    Haskell2010
 
 test-suite panrec-test
