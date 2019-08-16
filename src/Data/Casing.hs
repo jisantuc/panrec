@@ -1,4 +1,5 @@
 module Data.Casing ( Casing (..)
+                   , reCase
                    , joinParts
                    , splitParts ) where
 
@@ -60,6 +61,9 @@ joinParts casing vals@(x:xs) =
     Lower ->
       mconcat $ (toLower <$>) <$> vals
 
+-- | Translate a string in one casing into a string in another
+reCase :: Casing -> Casing -> String -> String
+reCase casingIn casingOut = joinParts casingOut . splitParts casingIn
 
 toTitle :: String -> String
 toTitle ""     = ""

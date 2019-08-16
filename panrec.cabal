@@ -18,7 +18,9 @@ library
   ghc-options:         -Wall
   exposed-modules:     Data.Casing
                      , Data.Parsers
+                     , Data.Primitive
                      , Data.Record
+                     , Data.RecordIO
                      , Data.Scala
                      , Data.Typescript
   build-depends:       base >= 4.7 && < 5
@@ -48,6 +50,9 @@ test-suite panrec-test
                      , bytestring
                      , raw-strings-qq
   other-modules:       Types
+                     , RoundTripSpec
+                     , ScalaSpec
+                     , TypescriptSpec
 
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010

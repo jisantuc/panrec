@@ -10,19 +10,42 @@ import           Data.ByteString                  (ByteString)
 import           Data.Parsers
 
 import           Data.Casing
-import           Data.Record                      (Record (..))
+import           Data.Primitive
+import           Data.Record                      (Record (..), getCasedFields)
 
-data Class = Class { _fields :: [String]
+data Class = Class { _fields :: [(String, Primitive)]
                    , _name   :: String } deriving (Eq, Show)
 
 instance Record Class where
   recordCasing = pure UpperCamel
   fieldCasing = pure Camel
-  constructor _ = ("class " ++) . (++ ")")
+  constructor = getConstructor
   typing = pure True
   fields = _fields
   name = _name
   fromRecord b = Class (fields b) (name b)
+
+getConstructor :: Class -> String
+getConstructor cls =
+  let
+    casedFields = getCasedFields cls
+  in
+    "class "
+    ++ name cls
+    ++ "{\n    constructor("
+    ++ casedFields
+    ++ ") {\n"
+    ++ getPropAssignments cls
+    ++ "    }\n}"
+
+getPropAssignments :: Class -> String
+getPropAssignments cls =
+  let
+    mkAssignment :: (String, Primitive) -> String
+    mkAssignment fld =
+      "        this." ++ fst fld ++ " = " ++ fst fld ++ ";"
+  in
+    concatMap (++ "\n") $ mkAssignment <$> fields cls
 
 -- | Parse blocks between pairs of {}, discarding what's in the middle
 blockParser :: Parser ByteString
@@ -35,12 +58,21 @@ blockParser = do
     many1 blockParser <* skipSpace
   pure $ h <> mconcat t
 
-fieldParser :: Parser (String, String)
+fieldParser :: Parser (String, Primitive)
 fieldParser = do
   skipMany space
   fieldName <- many' letterOrDigit <* skipSpace <* char ':'
-  fieldType <- skipSpace *> many' letterOrDigit <* skipSpace <* char ';'
+  fieldType <- skipSpace *> primParser <* skipSpace <* char ';'
   return (fieldName, fieldType)
+
+primParser :: Parser Primitive
+primParser =
+  (\_ -> Double') <$> string "number"
+  <|> (\_ -> String') <$> string "string"
+  <|> List' <$> (string "Array<" *> primParser <* char '>')
+  <|> (\_ -> Any) <$> string "any"
+  <|> (\_ -> Boolean') <$> string "boolean"
+  <|> Vendor <$> many' letterOrDigit
 
 funcArgParser :: Parser (String, String)
 funcArgParser =  do
@@ -63,10 +95,9 @@ classParser :: Parser Class
 classParser = do
   className <- "class " *> many' letterOrDigit <* skipSpace <* char '{' <* skipSpace
   classFields <- many' (many' funcParser *> fieldParser <* skipSpace <* many' funcParser)
-  -- skipSpace <* char '}'
-  return $ Class (fst <$> classFields) className
+  return $ Class (classFields) className
 
-parseField :: ByteString -> Either String (String, String)
+parseField :: ByteString -> Either String (String, Primitive)
 parseField = parseOnly fieldParser
 
 parseClass :: ByteString -> Either String Class
