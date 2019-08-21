@@ -43,9 +43,9 @@ fieldParser = do
                <* char ':'
                <* try (many' space)
   fieldType <- primParser
-               <* (try
-                   (char ',' <|> endOfLineOrSpace)
-                   <|> char ')')
+               <* ( char ','
+                    <|> (many' endOfLineOrSpace *> char ')')
+                  )
   return (fieldName, fieldType)
 
 primParser :: Parser Primitive

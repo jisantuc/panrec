@@ -19,19 +19,21 @@ scalaSpec = hspec $ do
     it "should parse a collection of fields" $ do
       Scala.parseFields justFields `shouldBe` (Right $ [ ("x", Int')
                                                        , ("y", Int')
-                                                       , ("z", Int')])
+                                                       , ("z", Int')
+                                                       , ("a", Int')])
     it "should read a scala case class correctly with spaces" $ do
       Scala.parseRecord exampleCaseClassSpaces `shouldBe`
         (Right $ Scala.CaseClass [("x", Int'), ("y", Int')] "Foo")
---    it "should read a scala case class correctly with returns" $ do
---      Scala.parseRecord exampleCaseClassReturns `shouldBe`
---        (Right $ Scala.CaseClass [("x", Int'), ("y", String')] "Foo")
+    it "should read a scala case class correctly with returns" $ do
+      Scala.parseRecord exampleCaseClassReturns `shouldBe`
+        (Right $ Scala.CaseClass [("x", Int'), ("y", String')] "Foo")
 
 exampleCaseClassReturns :: ByteString
 exampleCaseClassReturns = pack [r|case class Foo(
   x: Int,
   y: String
-)\n|]
+)
+|]
 
 exampleCaseClassSpaces :: ByteString
 exampleCaseClassSpaces = "case class Foo(x: Int, y: Int)\n"
@@ -49,4 +51,5 @@ justFields :: ByteString
 justFields = pack [r|x: Int,
 y: Int,
 z: Int,
-a: Int|]
+a: Int
+)|]
