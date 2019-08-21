@@ -1,20 +1,34 @@
 module Main where
 
 import qualified Data.ByteString     as BS
+import           Data.Record
+import           Data.RecordIO
+import qualified Data.Scala          as Scala
 import           Data.Semigroup      ((<>))
+import qualified Data.Typescript     as TS
 import           Options.Applicative
+import           System.Exit         (ExitCode (..), exitWith)
 
 data Options = Options { inLanguage  :: String
                        , outLanguage :: String
                        , inFile      :: String
                        , outFile     :: String } deriving Show
 
+runPipeline :: (Record a, Record b) => a -> b -> BS.ByteString -> FilePath -> IO ()
+runPipeline src dst input outf = do
+  result <- pure $ parseRecords src input
+  case result of
+    Right recs ->
+      (writer dst) outf (fromRecord <$> recs)
+    Left err ->
+      print err *> exitWith (ExitFailure 1)
+
 options :: Parser Options
 options = Options
   <$> strOption ( long "in-language"
-              <> short 'i'
-              <> metavar "INLANGUAGE"
-              <> help "Language of the input file" )
+                  <> short 'i'
+                  <> metavar "INLANGUAGE"
+                  <> help "Language of the input file" )
   <*> strOption ( long "out-language"
                   <> short 'o'
                   <> metavar "OUTLANGUAGE"
@@ -23,9 +37,16 @@ options = Options
   <*> argument str ( metavar "OUTPUTFILE" )
 
 run :: Options -> IO ()
-run (Options _ _ inf outf ) = do
-  inText <- BS.readFile inf
-  BS.writeFile outf inText
+run (Options inl outl inf outf ) =
+  do
+    inText <- BS.readFile inf
+    case (inl, outl) of
+      ("scala", "typescript") ->
+        runPipeline (emptyR :: Scala.CaseClass) (emptyR :: TS.Class) inText outf
+      ("typescript", "scala") ->
+        runPipeline (emptyR :: TS.Class) (emptyR :: Scala.CaseClass) inText outf
+      _ ->
+        print "No idea what to do with those inputs" *> exitWith (ExitFailure 1)
 
 main :: IO ()
 main = run =<< execParser opts

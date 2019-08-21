@@ -13,6 +13,7 @@ import           Data.Casing
 import           Data.Parsers
 import           Data.Primitive
 import           Data.Record                      (Record (..), getCasedFields)
+import           Data.RecordIO
 
 data CaseClass = CaseClass { _fields :: [(String, Primitive)]
                            , _name   :: String } deriving (Eq, Show)
@@ -25,10 +26,14 @@ instance Record CaseClass where
   fields = _fields
   name = _name
   fromRecord b = CaseClass (fields b) (name b)
+  primitiveShow = pure primitivePrinter
+  parser = pure caseClassParser
+  writer = pure writeRecords
+  emptyR = CaseClass [] ""
 
 getConstructor :: Record b => b -> String
 getConstructor record =
-  "case class " ++ name record ++ "("  ++ getCasedFields record ++ ")"
+  "case class " ++ name record ++ "("  ++ getCasedFields record ',' ++ ")"
 
 fieldParser :: Parser (String, Primitive)
 fieldParser = do
@@ -60,6 +65,22 @@ primParser =
   <|> List' <$> (string "List[" *> primParser <* char ']')
   <|> Vendor <$> many' letterOrDigit
 
+primitivePrinter :: Primitive -> String
+primitivePrinter prim =
+  case prim of
+    Int'        -> "Int"
+    Double'     -> "Double"
+    Float'      -> "Float"
+    Char'       -> "Char"
+    String'     -> "String"
+    Boolean'    -> "Boolean"
+    Any         -> "Any"
+    Option' p   -> "Option[" ++ primitivePrinter p ++ "]"
+    Either' e a -> "Either[" ++ primitivePrinter e ++ ", " ++ primitivePrinter a ++ "]"
+    IO' p       -> "IO[" ++ primitivePrinter p ++ "]"
+    List' p     -> "List[" ++ primitivePrinter p ++ "]"
+    Vendor s    -> s
+
 caseClassParser :: Parser CaseClass
 caseClassParser = do
   skipMany space
@@ -67,8 +88,8 @@ caseClassParser = do
   recordName <- many' letterOrDigit
   _ <- char '('
   skipSpace
-  recordFields <- many' (fieldParser)
-  skipSpace
+  recordFields <- many' fieldParser
+  endOfLine
   return $ CaseClass recordFields recordName
 
 parseField :: ByteString -> Either String (String, Primitive)

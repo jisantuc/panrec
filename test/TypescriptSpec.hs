@@ -36,7 +36,8 @@ exampleTypescriptClassNoFunc ::  ByteString
 exampleTypescriptClassNoFunc = [r|class Greeter {
     greeting: string;
     otherField: number;
-}|]
+}
+|]
 
 exampleTypescriptClass :: ByteString
 exampleTypescriptClass = [r|class Greeter {
@@ -49,7 +50,8 @@ exampleTypescriptClass = [r|class Greeter {
         return "Hello, " + this.greeting;
     }
     otherField: number;
-}|]
+}
+|]
 
 exampleClassFunction :: ByteString
 exampleClassFunction = [r|constructor(message: string) {

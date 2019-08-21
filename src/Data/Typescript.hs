@@ -2,6 +2,7 @@ module Data.Typescript ( parseField
                        , parseFunction
                        , parseBlock
                        , parseClass
+                       , classParser
                        , Class(..) ) where
 
 import           Control.Applicative              ((<|>))
@@ -12,6 +13,7 @@ import           Data.Parsers
 import           Data.Casing
 import           Data.Primitive
 import           Data.Record                      (Record (..), getCasedFields)
+import           Data.RecordIO
 
 data Class = Class { _fields :: [(String, Primitive)]
                    , _name   :: String } deriving (Eq, Show)
@@ -24,16 +26,23 @@ instance Record Class where
   fields = _fields
   name = _name
   fromRecord b = Class (fields b) (name b)
+  primitiveShow = pure primitivePrinter
+  parser = pure classParser
+  writer = pure writeRecords
+  emptyR = Class [] ""
 
 getConstructor :: Class -> String
 getConstructor cls =
   let
-    casedFields = getCasedFields cls
+    fieldMembers = getCasedFields cls ';'
+    constructorParams = getCasedFields cls ','
   in
     "class "
     ++ name cls
-    ++ "{\n    constructor("
-    ++ casedFields
+    ++ " {\n    "
+    ++ fieldMembers
+    ++ ";\n    constructor("
+    ++ constructorParams
     ++ ") {\n"
     ++ getPropAssignments cls
     ++ "    }\n}"
@@ -74,6 +83,22 @@ primParser =
   <|> (\_ -> Boolean') <$> string "boolean"
   <|> Vendor <$> many' letterOrDigit
 
+primitivePrinter :: Primitive -> String
+primitivePrinter prim =
+  case prim of
+    Int' -> "number"
+    Double' -> "number"
+    Float' -> "number"
+    Char' -> "string"
+    String' -> "string"
+    Boolean' -> "boolean"
+    Any -> "any"
+    Option' p -> "Option<" ++ primitivePrinter p ++ ">"
+    Either' e a -> "Either<" ++ primitivePrinter e ++ ", " ++ primitivePrinter a ++ ">"
+    IO' p -> "Promise<" ++ primitivePrinter p ++ ">"
+    List' p -> "Array<" ++ primitivePrinter p ++ ">"
+    Vendor s -> s
+
 funcArgParser :: Parser (String, String)
 funcArgParser =  do
   skipMany space
@@ -89,12 +114,19 @@ funcParser = do
     *> sepBy funcArgParser (char ',')
     *> char ')'
     *> blockParser
-    *> skipSpace
+    *> pure ()
 
 classParser :: Parser Class
 classParser = do
+  skipSpace
   className <- "class " *> many' letterOrDigit <* skipSpace <* char '{' <* skipSpace
-  classFields <- many' (many' funcParser *> fieldParser <* skipSpace <* many' funcParser)
+  classFields <- many' ( many' funcParser
+                         *> skipSpace
+                         *> fieldParser
+                         <* skipSpace
+                         <* many' funcParser )
+                 <* skipSpace
+                 <* char '}'
   return $ Class (classFields) className
 
 parseField :: ByteString -> Either String (String, Primitive)

@@ -1,7 +1,8 @@
 module Data.Record where
 
+import           Data.Attoparsec.ByteString.Char8
 import           Data.Casing
-import           Data.List      (intersperse)
+import           Data.List                        (intersperse)
 import           Data.Primitive
 
 -- | Record is a generic container for things that have constructors,
@@ -29,17 +30,24 @@ class Record a where
   name :: a -> String
   -- | Build this type from another record
   fromRecord :: Record b => b -> a
+  -- | Print primitives as types native to this language
+  primitiveShow :: a -> Primitive -> String
+  -- | Carry around information about how to parse this record from source
+  parser :: a -> Parser a
+  -- | Carry around information about how to write this record to source
+  writer :: a -> FilePath -> [a] -> IO ()
+  emptyR :: a
 
 -- | Get fields for this record type with their types
 -- Currently this assumes that you want Scala, Python3, or TypeScript-style
 -- type annotations (single :, a space, and the type name). That will have to
 -- change to support more languages
-getCasedFields :: Record b => b -> String
-getCasedFields record =
+getCasedFields :: Record b => b -> Char -> String
+getCasedFields record sep =
   let
     caser field =
       reCase (fieldCasing record) Camel (fst field)
       ++ ": "
-      ++ show (snd field)
+      ++ primitiveShow record (snd field)
   in
-    mconcat . intersperse ",\n" $ caser <$> (fields record)
+    mconcat . intersperse (sep : "\n") $ caser <$> (fields record)
