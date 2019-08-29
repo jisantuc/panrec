@@ -1,0 +1,29 @@
+name: Haskell CI
+
+on:
+  push:
+    branches:
+    - master
+    - develop
+    - feature/*
+  pull_request:
+    branches:
+    - develop
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Download package list
+      run: cabal update
+    - name: Install dependencies
+      run: cabal install --only-dependencies --enable-tests
+    - name: Build
+      run: |
+        cabal configure --enable-tests
+        cabal build
+    - name: Run tests
+      run: cabal test

@@ -9,6 +9,7 @@ import           Control.Applicative              ((<|>))
 import           Data.Attoparsec.ByteString.Char8
 import           Data.ByteString                  (ByteString)
 import           Data.Parsers
+import           Data.Semigroup                   ((<>))
 
 import           Data.Casing
 import           Data.Primitive

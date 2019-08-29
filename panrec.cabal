@@ -45,6 +45,7 @@ test-suite panrec-test
   main-is:             Spec.hs
   build-depends:       base
                      , panrec
+                     , attoparsec
                      , hspec >= 2.7.1 && < 2.8.0
                      , QuickCheck >= 2.13.1 && < 2.14
                      , bytestring
