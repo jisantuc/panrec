@@ -5,11 +5,11 @@ import           Test.Hspec
 import           TypescriptSpec (typescriptSpec)
 
 main :: IO ()
-main = do
+main = hspec $ do
   scalaSpec
   typescriptSpec
   roundTripSpec
-  hspec $ do
+  do
     describe "Splitting with casings" $ do
       it "should split a camel-case string" $ do
         Casing.splitParts Casing.Camel "aGoodString" `shouldBe` ["a", "good", "string"]

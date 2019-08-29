@@ -21,6 +21,7 @@ data Class = Class { _fields :: [(String, Primitive)]
 instance Record Class where
   recordCasing = pure UpperCamel
   fieldCasing = pure Camel
+  constructorKeyword = pure "class"
   constructor = getConstructor
   typing = pure True
   fields = _fields
@@ -63,7 +64,7 @@ blockParser = do
   _ <- many' letterOrDigit <* skipSpace
   char '{' *> skipSpace
   h <- takeTill (\x -> x == '{' || x == '}')
-  t <- pure <$> const "" <$> string "}" <* skipSpace <|>
+  t <- pure <$> const "" <$> char '}' <* skipSpace <|>
     many1 blockParser <* skipSpace
   pure $ h <> mconcat t
 
@@ -78,9 +79,14 @@ primParser :: Parser Primitive
 primParser =
   (\_ -> Double') <$> string "number"
   <|> (\_ -> String') <$> string "string"
-  <|> List' <$> (string "Array<" *> primParser <* char '>')
   <|> (\_ -> Any) <$> string "any"
   <|> (\_ -> Boolean') <$> string "boolean"
+  <|> List' <$> (string "Array<" *> primParser <* char '>')
+  <|> Option' <$> (string "Option<" *> primParser <* char '>')
+  <|> Either'
+  <$> (string "Either<" *> primParser <* char ',' <* many' space)
+  <*> (primParser <* char '>')
+  <|> IO' <$> (string "Promise<" *> primParser <* char '>')
   <|> Vendor <$> many' letterOrDigit
 
 primitivePrinter :: Primitive -> String
@@ -119,15 +125,14 @@ funcParser = do
 classParser :: Parser Class
 classParser = do
   skipSpace
-  className <- "class " *> many' letterOrDigit <* skipSpace <* char '{' <* skipSpace
+  className <- many' letterOrDigit <* skipSpace <* char '{' <* skipSpace
   classFields <- many' ( many' funcParser
                          *> skipSpace
                          *> fieldParser
                          <* skipSpace
                          <* many' funcParser )
                  <* skipSpace
-                 <* char '}'
-  return $ Class (classFields) className
+  return $ Class classFields className
 
 parseField :: ByteString -> Either String (String, Primitive)
 parseField = parseOnly fieldParser

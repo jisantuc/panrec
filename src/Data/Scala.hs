@@ -21,6 +21,7 @@ data CaseClass = CaseClass { _fields :: [(String, Primitive)]
 instance Record CaseClass where
   recordCasing = pure UpperCamel
   fieldCasing = pure Camel
+  constructorKeyword = pure "case class"
   constructor = getConstructor
   typing = pure True
   fields = _fields
@@ -83,9 +84,7 @@ primitivePrinter prim =
 
 caseClassParser :: Parser CaseClass
 caseClassParser = do
-  skipMany space
-  _ <- "case class" <* skipSpace
-  recordName <- many' letterOrDigit
+  recordName <- skipSpace *> many' letterOrDigit
   _ <- char '('
   skipSpace
   recordFields <- many' fieldParser

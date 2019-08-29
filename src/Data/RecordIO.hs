@@ -15,6 +15,6 @@ writeRecords p recs =
 parseRecords :: Record a => a -> ByteString -> Either String [a]
 parseRecords src =
   let
-    lineParser = takeTill (== '\n')
+    cruftParser = cruft src
   in
-    parseOnly $ sepBy (parser src) lineParser
+    parseOnly (cruftParser *> sepBy (parser src) cruftParser)

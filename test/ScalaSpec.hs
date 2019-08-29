@@ -1,14 +1,16 @@
 module ScalaSpec (scalaSpec) where
 
-import           Data.ByteString       (ByteString)
-import           Data.ByteString.Char8 (pack)
+import           Data.ByteString                  (ByteString)
+import           Data.ByteString.Char8            (pack)
 import           Data.Primitive
-import qualified Data.Scala            as Scala
+import           Data.Record
+import           Data.RecordIO
+import qualified Data.Scala                       as Scala
 import           Test.Hspec
 import           Text.RawString.QQ
 
-scalaSpec :: IO ()
-scalaSpec = hspec $ do
+scalaSpec :: Spec
+scalaSpec = do
   describe "Scala parsers" $ do
     it "should parse fields terminated with returns" $ do
       Scala.parseField exampleFieldReturn `shouldBe` (Right $ ("x", Int'))
@@ -27,16 +29,20 @@ scalaSpec = hspec $ do
     it "should read a scala case class correctly with returns" $ do
       Scala.parseRecord exampleCaseClassReturns `shouldBe`
         (Right $ Scala.CaseClass [("x", Int'), ("y", String')] "Foo")
+    it "should parse several case classes when separated by cruft" $ do
+      parseRecords (emptyR :: Scala.CaseClass) exampleSeveralCaseClasses `shouldBe`
+        Right [ Scala.CaseClass [ ("x", Int'), ("y", Int') ] "Foo"
+              , Scala.CaseClass [ ("x", String') ] "Bar" ]
 
 exampleCaseClassReturns :: ByteString
-exampleCaseClassReturns = pack [r|case class Foo(
+exampleCaseClassReturns = pack [r| Foo(
   x: Int,
   y: String
 )
 |]
 
 exampleCaseClassSpaces :: ByteString
-exampleCaseClassSpaces = "case class Foo(x: Int, y: Int)\n"
+exampleCaseClassSpaces = " Foo(x: Int, y: Int)\n"
 
 exampleFieldReturn :: ByteString
 exampleFieldReturn = "x: Int,\n"
@@ -48,8 +54,15 @@ exampleFieldLast :: ByteString
 exampleFieldLast = "x: Int)"
 
 justFields :: ByteString
-justFields = pack [r|x: Int,
+justFields = [r|x: Int,
 y: Int,
 z: Int,
 a: Int
 )|]
+
+exampleSeveralCaseClasses :: ByteString
+exampleSeveralCaseClasses = [r|case class Foo(x: Int, y: Int)
+
+object Foo {
+  case class Bar(x: String)
+}|]

@@ -7,8 +7,8 @@ import           Test.Hspec
 import           Test.QuickCheck
 import           Types
 
-roundTripSpec :: IO ()
-roundTripSpec = hspec $ do
+roundTripSpec :: Spec
+roundTripSpec = do
   describe "Round trips" $ do
     it "should not change the input value for scala records" $ do
       property $ quickCheck unchangedScala

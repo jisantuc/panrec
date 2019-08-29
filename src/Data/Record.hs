@@ -1,6 +1,9 @@
 module Data.Record where
 
+import           Control.Applicative              ((<|>))
 import           Data.Attoparsec.ByteString.Char8
+import           Data.ByteString                  (ByteString)
+import           Data.ByteString.Char8            (uncons)
 import           Data.Casing
 import           Data.List                        (intersperse)
 import           Data.Primitive
@@ -19,8 +22,10 @@ class Record a where
   -- while Snake would indicate
   -- data Foo = Foo { foo_bar :: Int, ... }
   fieldCasing :: a -> Casing
-  -- | The keyword and syntax around this record type, e.g.,
-  -- data Foo = Foo { bar :: Int, ... }
+  -- | The string that indicates that a definition of this record type
+  -- has begun
+  constructorKeyword :: a -> ByteString
+  -- | Write this record into the syntax appropriate for its language
   constructor :: a -> String
   -- | Whether this record type includes type information
   typing :: a -> Bool
@@ -32,10 +37,23 @@ class Record a where
   fromRecord :: Record b => b -> a
   -- | Print primitives as types native to this language
   primitiveShow :: a -> Primitive -> String
+  -- | How to throw away cruft before attempting to parse this record type
+  cruft :: a -> Parser ()
+  cruft a =
+    let
+      unconsed = uncons (constructorKeyword a)
+      sigil = constructorKeyword a
+    in
+      case unconsed of
+        Just (c, _) ->
+          skipWhile (/= c) *> (const () <$> string sigil <|> char c *> cruft a)
+        Nothing ->
+          pure ()
   -- | Carry around information about how to parse this record from source
   parser :: a -> Parser a
   -- | Carry around information about how to write this record to source
   writer :: a -> FilePath -> [a] -> IO ()
+  -- | Provide an empty value to apply other functions to
   emptyR :: a
 
 -- | Get fields for this record type with their types
@@ -50,4 +68,4 @@ getCasedFields record sep =
       ++ ": "
       ++ primitiveShow record (snd field)
   in
-    mconcat . intersperse (sep : "\n") $ caser <$> (fields record)
+    mconcat . intersperse (sep : "\n    ") $ caser <$> (fields record)
