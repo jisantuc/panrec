@@ -34,7 +34,7 @@ instance Record CaseClass where
 
 getConstructor :: Record b => b -> String
 getConstructor record =
-  "case class " ++ name record ++ "("  ++ getCasedFields record ',' ++ ")"
+  "case class " ++ name record ++ "("  ++ getCasedFields record ',' Nothing ++ ")"
 
 fieldParser :: Parser (String, Primitive)
 fieldParser = do
@@ -64,23 +64,14 @@ primParser =
   <*> (primParser <* char ']')
   <|> IO' <$> (string "IO[" *> primParser <* char ']')
   <|> List' <$> (string "List[" *> primParser <* char ']')
+  <|> VendorHK <$>
+  (many' letterOrDigit) <* char '['
+  <*> sepBy primParser (char ',' <* skipSpace)
+  <* char ']'
   <|> Vendor <$> many' letterOrDigit
 
 primitivePrinter :: Primitive -> String
-primitivePrinter prim =
-  case prim of
-    Int'        -> "Int"
-    Double'     -> "Double"
-    Float'      -> "Float"
-    Char'       -> "Char"
-    String'     -> "String"
-    Boolean'    -> "Boolean"
-    Any         -> "Any"
-    Option' p   -> "Option[" ++ primitivePrinter p ++ "]"
-    Either' e a -> "Either[" ++ primitivePrinter e ++ ", " ++ primitivePrinter a ++ "]"
-    IO' p       -> "IO[" ++ primitivePrinter p ++ "]"
-    List' p     -> "List[" ++ primitivePrinter p ++ "]"
-    Vendor s    -> s
+primitivePrinter = printer "[" "]"
 
 caseClassParser :: Parser CaseClass
 caseClassParser = do

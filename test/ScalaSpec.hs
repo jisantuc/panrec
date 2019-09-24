@@ -18,6 +18,9 @@ scalaSpec = do
       Scala.parseField exampleFieldSpace `shouldBe` (Right $ ("x", Int'))
     it "should parse fields not terminated by commas" $ do
       Scala.parseField exampleFieldLast `shouldBe` (Right $ ("x", Int'))
+    it "should parse a field with an exotic higher-kinded type" $ do
+      Scala.parseField fieldWithExoticHKT `shouldBe`
+        (Right $ ("x", Option' $ VendorHK "Projected" [ Vendor "Geometry" ]))
     it "should parse a collection of fields" $ do
       Scala.parseFields justFields `shouldBe` (Right $ [ ("x", Int')
                                                        , ("y", Int')
@@ -29,6 +32,11 @@ scalaSpec = do
     it "should read a scala case class correctly with returns" $ do
       Scala.parseRecord exampleCaseClassReturns `shouldBe`
         (Right $ Scala.CaseClass [("x", Int'), ("y", String')] "Foo")
+    it "should read a scala case class correctly with an exotic higher-kinded type" $ do
+      Scala.parseRecord exampleCaseClassWithExoticHKT `shouldBe`
+        (Right $ Scala.CaseClass
+         [("x", Option' $ VendorHK "Projected" [ Vendor "Geometry" ])]
+         "Foo")
     it "should parse several case classes when separated by cruft" $ do
       parseRecords (emptyR :: Scala.CaseClass) exampleSeveralCaseClasses `shouldBe`
         Right [ Scala.CaseClass [ ("x", Int'), ("y", Int') ] "Foo"
@@ -60,9 +68,18 @@ z: Int,
 a: Int
 )|]
 
+fieldWithExoticHKT :: ByteString
+fieldWithExoticHKT = "x: Option[Projected[Geometry]],"
+
 exampleSeveralCaseClasses :: ByteString
 exampleSeveralCaseClasses = [r|case class Foo(x: Int, y: Int)
 
 object Foo {
   case class Bar(x: String)
 }|]
+
+exampleCaseClassWithExoticHKT :: ByteString
+exampleCaseClassWithExoticHKT = [r| Foo(
+  x: Option[Projected[Geometry]]
+)
+|]

@@ -1,13 +1,15 @@
-import qualified Data.Casing    as Casing
-import           RoundTripSpec  (roundTripSpec)
-import           ScalaSpec      (scalaSpec)
+import qualified Data.Casing             as Casing
+import           RoundTripSpec           (roundTripSpec)
+import           ScalaSpec               (scalaSpec)
 import           Test.Hspec
-import           TypescriptSpec (typescriptSpec)
+import           TypescriptInterfaceSpec (typescriptInterfaceSpec)
+import           TypescriptSpec          (typescriptSpec)
 
 main :: IO ()
 main = hspec $ do
   scalaSpec
   typescriptSpec
+  typescriptInterfaceSpec
   roundTripSpec
   do
     describe "Splitting with casings" $ do

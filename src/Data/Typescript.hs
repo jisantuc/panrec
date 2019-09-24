@@ -8,7 +8,7 @@ module Data.Typescript ( parseField
 import           Control.Applicative              ((<|>))
 import           Data.Attoparsec.ByteString.Char8
 import           Data.ByteString                  (ByteString)
-import           Data.Parsers
+import           Data.Parsers                     (letterOrDigit, tsPrimParser)
 import           Data.Semigroup                   ((<>))
 
 import           Data.Casing
@@ -28,7 +28,7 @@ instance Record Class where
   fields = _fields
   name = _name
   fromRecord b = Class (fields b) (name b)
-  primitiveShow = pure primitivePrinter
+  primitiveShow = pure tsPrinter
   parser = pure classParser
   writer = pure writeRecords
   emptyR = Class [] ""
@@ -36,8 +36,8 @@ instance Record Class where
 getConstructor :: Class -> String
 getConstructor cls =
   let
-    fieldMembers = getCasedFields cls ';'
-    constructorParams = getCasedFields cls ','
+    fieldMembers = getCasedFields cls ';' Nothing
+    constructorParams = getCasedFields cls ',' Nothing
   in
     "class "
     ++ name cls
@@ -73,38 +73,8 @@ fieldParser :: Parser (String, Primitive)
 fieldParser = do
   skipMany space
   fieldName <- many' letterOrDigit <* skipSpace <* char ':'
-  fieldType <- skipSpace *> primParser <* skipSpace <* char ';'
+  fieldType <- skipSpace *> tsPrimParser <* skipSpace <* char ';'
   return (fieldName, fieldType)
-
-primParser :: Parser Primitive
-primParser =
-  (\_ -> Double') <$> string "number"
-  <|> (\_ -> String') <$> string "string"
-  <|> (\_ -> Any) <$> string "any"
-  <|> (\_ -> Boolean') <$> string "boolean"
-  <|> List' <$> (string "Array<" *> primParser <* char '>')
-  <|> Option' <$> (string "Option<" *> primParser <* char '>')
-  <|> Either'
-  <$> (string "Either<" *> primParser <* char ',' <* many' space)
-  <*> (primParser <* char '>')
-  <|> IO' <$> (string "Promise<" *> primParser <* char '>')
-  <|> Vendor <$> many' letterOrDigit
-
-primitivePrinter :: Primitive -> String
-primitivePrinter prim =
-  case prim of
-    Int' -> "number"
-    Double' -> "number"
-    Float' -> "number"
-    Char' -> "string"
-    String' -> "string"
-    Boolean' -> "boolean"
-    Any -> "any"
-    Option' p -> "Option<" ++ primitivePrinter p ++ ">"
-    Either' e a -> "Either<" ++ primitivePrinter e ++ ", " ++ primitivePrinter a ++ ">"
-    IO' p -> "Promise<" ++ primitivePrinter p ++ ">"
-    List' p -> "Array<" ++ primitivePrinter p ++ ">"
-    Vendor s -> s
 
 funcArgParser :: Parser (String, String)
 funcArgParser =  do

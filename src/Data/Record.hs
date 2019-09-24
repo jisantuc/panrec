@@ -6,6 +6,7 @@ import           Data.ByteString                  (ByteString)
 import           Data.ByteString.Char8            (uncons)
 import           Data.Casing
 import           Data.List                        (intersperse)
+import           Data.Maybe                       (maybe)
 import           Data.Primitive
 
 -- | Record is a generic container for things that have constructors,
@@ -60,11 +61,12 @@ class Record a where
 -- Currently this assumes that you want Scala, Python3, or TypeScript-style
 -- type annotations (single :, a space, and the type name). That will have to
 -- change to support more languages
-getCasedFields :: Record b => b -> Char -> String
-getCasedFields record sep =
+getCasedFields :: Record b => b -> Char -> Maybe String -> String
+getCasedFields record sep leader =
   let
     caser field =
-      reCase (fieldCasing record) Camel (fst field)
+      maybe "" (++ " ") leader
+      ++ reCase (fieldCasing record) Camel (fst field)
       ++ ": "
       ++ primitiveShow record (snd field)
   in

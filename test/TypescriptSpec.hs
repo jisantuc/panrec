@@ -14,6 +14,9 @@ typescriptSpec = do
   describe "Typescript parsers" $ do
     it "should parse a field correctly" $ do
       TS.parseField exampleTypescriptField `shouldBe` (Right $ ("greeting", String'))
+    it "should parse a field correctly with an exotic higher-kinded type" $ do
+      TS.parseField exampleTypescriptFieldExoticHKT `shouldBe`
+        (Right $ ("friends", VendorHK "ReadonlyArray" [ String' ]))
     it "should parse a constructor function correctly" $ do
       TS.parseFunction exampleClassFunction `shouldBe` (Right ())
     it "should parse a normal function correctly" $ do
@@ -54,6 +57,9 @@ exampleTypescriptField :: ByteString
 exampleTypescriptField =
   "    greeting: string;"
 
+exampleTypescriptFieldExoticHKT :: ByteString
+exampleTypescriptFieldExoticHKT =
+  "    friends: ReadonlyArray<string>;"
 
 exampleTypescriptClassNoFunc ::  ByteString
 exampleTypescriptClassNoFunc = [r| Greeter {
