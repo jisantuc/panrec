@@ -36,14 +36,32 @@ getConstructor :: Record b => b -> String
 getConstructor record =
   "case class " ++ name record ++ "("  ++ getCasedFields record ',' Nothing ++ ")"
 
+defaultValueParser :: Parser ()
+defaultValueParser =
+  let
+    quoteParser =
+      skipMany (char '"' <|> char '\'')
+    p = quoteParser
+      *> many' letterOrDigit
+      *> skipMany (char '(' *> skipSpace *> defaultValueParser *> skipSpace *> char ')')
+      *> quoteParser
+  in
+    const () <$> p
+
+defaultArgParser :: Parser ()
+defaultArgParser = do
+  try $ skipSpace <* char '=' <* skipSpace <* defaultValueParser
+
+
 fieldParser :: Parser (String, Primitive)
 fieldParser = do
-  _ <- skipWhile isSpace
+  skipSpace
   fieldName <- many' letterOrDigit
                <* try (many' space)
                <* char ':'
                <* try (many' space)
   fieldType <- primParser
+               <* skipMany defaultArgParser
                <* ( char ','
                     <|> (many' endOfLineOrSpace *> char ')')
                   )
@@ -68,7 +86,7 @@ primParser =
   (many' letterOrDigit) <* char '['
   <*> sepBy primParser (char ',' <* skipSpace)
   <* char ']'
-  <|> Vendor <$> many' letterOrDigit
+  <|> vendorParser
 
 primitivePrinter :: Primitive -> String
 primitivePrinter = printer "[" "]"

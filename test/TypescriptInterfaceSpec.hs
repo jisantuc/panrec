@@ -21,7 +21,7 @@ typescriptInterfaceSpec = do
          TS.Interface [ ("id", String')
                       , ("name", String')
                       , ("friends", VendorHK "ReadonlyArray" [ Vendor "Friend" ])
-                      , ("enemies", VendorHK "ReadonlyArray" [ Vendor "Enemy" ]) ]
+                      , ("enemies", VendorHK "ReadonlyArray" [ Vendor "relationships.Enemy" ]) ]
           "Character")
     it "should parse and encode and parse an interface correctly" $ do
       do
@@ -33,7 +33,7 @@ typescriptInterfaceSpec = do
         ( Right $ [ TS.Interface [ ("id", String')
                                  , ("name", String')
                                  , ("friends", VendorHK "ReadonlyArray" [ Vendor "Friend" ])
-                                 , ("enemies", VendorHK "ReadonlyArray" [ Vendor "Enemy" ]) ]
+                                 , ("enemies", VendorHK "ReadonlyArray" [ Vendor "relationships.Enemy" ]) ]
                     "Character" ] )
 
 
@@ -42,7 +42,7 @@ exampleInterface = [r|Character {
   readonly id: string;
   readonly name: string;
   readonly friends: ReadonlyArray<Friend>;
-  readonly enemies: ReadonlyArray<Enemy>;
+  readonly enemies: ReadonlyArray<relationships.Enemy>;
 }
 |]
 

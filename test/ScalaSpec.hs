@@ -37,6 +37,13 @@ scalaSpec = do
         (Right $ Scala.CaseClass
          [("x", Option' $ VendorHK "Projected" [ Vendor "Geometry" ])]
          "Foo")
+    it "should read a scala case class correctly with a default argument" $ do
+      Scala.parseRecord exampleCaseClassWithDefaultArgs `shouldBe`
+        (Right $ Scala.CaseClass
+         [ ("x", Option' $ VendorHK "Projected" [ Vendor "Geometry" ])
+         , ("y", Option' Int')
+         , ("z", Option' (Either' String' (Vendor "java.util.UUID")))]
+         "Foo")
     it "should parse several case classes when separated by cruft" $ do
       parseRecords (emptyR :: Scala.CaseClass) exampleSeveralCaseClasses `shouldBe`
         Right [ Scala.CaseClass [ ("x", Int'), ("y", Int') ] "Foo"
@@ -81,5 +88,13 @@ object Foo {
 exampleCaseClassWithExoticHKT :: ByteString
 exampleCaseClassWithExoticHKT = [r| Foo(
   x: Option[Projected[Geometry]]
+)
+|]
+
+exampleCaseClassWithDefaultArgs :: ByteString
+exampleCaseClassWithDefaultArgs = [r| Foo(
+  x: Option[Projected[Geometry]] = None,
+  y: Option[Int] = Some(3),
+  z: Option[Either[String, java.util.UUID]] = Some(Left("lol"))
 )
 |]
