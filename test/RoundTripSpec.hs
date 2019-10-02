@@ -1,4 +1,6 @@
-module RoundTripSpec (roundTripSpec) where
+module RoundTripSpec
+  ( roundTripSpec
+  ) where
 
 import           Data.Record
 import qualified Data.Scala      as Scala

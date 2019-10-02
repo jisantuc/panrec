@@ -1,10 +1,11 @@
-module Data.Scala (
-  CaseClass(..)
+module Data.Scala
+  ( CaseClass(..)
   , caseClassParser
   , fieldParser
   , parseField
   , parseFields
-  , parseRecord) where
+  , parseRecord
+  ) where
 
 import           Control.Applicative              ((<|>))
 import           Data.Attoparsec.ByteString.Char8
@@ -15,8 +16,12 @@ import           Data.Primitive
 import           Data.Record                      (Record (..), getCasedFields)
 import           Data.RecordIO
 
-data CaseClass = CaseClass { _fields :: [(String, Primitive)]
-                           , _name   :: String } deriving (Eq, Show)
+data CaseClass =
+  CaseClass
+    { _fields :: [(String, Primitive)]
+    , _name   :: String
+    }
+  deriving (Eq, Show)
 
 instance Record CaseClass where
   recordCasing = pure UpperCamel
@@ -34,59 +39,50 @@ instance Record CaseClass where
 
 getConstructor :: Record b => b -> String
 getConstructor record =
-  "case class " ++ name record ++ "("  ++ getCasedFields record ',' Nothing ++ ")"
+  "case class " ++
+  name record ++ "(" ++ getCasedFields record ',' Nothing ++ ")"
 
 defaultValueParser :: Parser ()
 defaultValueParser =
-  let
-    quoteParser =
-      skipMany (char '"' <|> char '\'')
-    p = quoteParser
-      *> many' letterOrDigit
-      *> skipMany (char '(' *> skipSpace *> defaultValueParser *> skipSpace *> char ')')
-      *> quoteParser
-  in
-    const () <$> p
+  let quoteParser = skipMany (char '"' <|> char '\'')
+      p =
+        quoteParser *> many' letterOrDigit *>
+        skipMany
+          (char '(' *> skipSpace *> defaultValueParser *> skipSpace *> char ')') *>
+        quoteParser
+   in const () <$> p
 
 defaultArgParser :: Parser ()
 defaultArgParser = do
   try $ skipSpace <* char '=' <* skipSpace <* defaultValueParser
 
-
 fieldParser :: Parser (String, Primitive)
 fieldParser = do
   skipSpace
-  fieldName <- many' letterOrDigit
-               <* try (many' space)
-               <* char ':'
-               <* try (many' space)
-  fieldType <- primParser
-               <* skipMany defaultArgParser
-               <* ( char ','
-                    <|> (many' endOfLineOrSpace *> char ')')
-                  )
+  fieldName <-
+    many' letterOrDigit <* try (many' space) <* char ':' <* try (many' space)
+  fieldType <-
+    primParser <* skipMany defaultArgParser <*
+    (char ',' <|> (many' endOfLineOrSpace *> char ')'))
   return (fieldName, fieldType)
 
 primParser :: Parser Primitive
 primParser =
-  (\_ -> Int') <$> string "Int"
-  <|> (\_ -> Double') <$> string "Double"
-  <|> (\_ -> Float') <$> string "Float"
-  <|> (\_ -> Char') <$> string "Char"
-  <|> (\_ -> String') <$> string "String"
-  <|> (\_ -> Boolean') <$> string "Boolean"
-  <|> (\_ -> Any) <$> string "Any"
-  <|> Option' <$> (string "Option[" *> primParser <* char ']')
-  <|> Either'
-  <$> (string "Either[" *> primParser <* char ',' <* many' space)
-  <*> (primParser <* char ']')
-  <|> IO' <$> (string "IO[" *> primParser <* char ']')
-  <|> List' <$> (string "List[" *> primParser <* char ']')
-  <|> VendorHK <$>
-  (many' letterOrDigit) <* char '['
-  <*> sepBy primParser (char ',' <* skipSpace)
-  <* char ']'
-  <|> vendorParser
+  (\_ -> Int') <$> string "Int" <|> (\_ -> Double') <$> string "Double" <|>
+  (\_ -> Float') <$> string "Float" <|>
+  (\_ -> Char') <$> string "Char" <|>
+  (\_ -> String') <$> string "String" <|>
+  (\_ -> Boolean') <$> string "Boolean" <|>
+  (\_ -> Any) <$> string "Any" <|>
+  Option' <$> (string "Option[" *> primParser <* char ']') <|>
+  Either' <$> (string "Either[" *> primParser <* char ',' <* many' space) <*>
+  (primParser <* char ']') <|>
+  IO' <$> (string "IO[" *> primParser <* char ']') <|>
+  List' <$> (string "List[" *> primParser <* char ']') <|>
+  VendorHK <$> (many' letterOrDigit) <* char '[' <*>
+  sepBy primParser (char ',' <* skipSpace) <*
+  char ']' <|>
+  vendorParser
 
 primitivePrinter :: Primitive -> String
 primitivePrinter = printer "[" "]"

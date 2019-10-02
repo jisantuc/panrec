@@ -1,9 +1,11 @@
-module Data.Typescript ( parseField
-                       , parseFunction
-                       , parseBlock
-                       , parseClass
-                       , classParser
-                       , Class(..) ) where
+module Data.Typescript
+  ( parseField
+  , parseFunction
+  , parseBlock
+  , parseClass
+  , classParser
+  , Class(..)
+  ) where
 
 import           Control.Applicative              ((<|>))
 import           Data.Attoparsec.ByteString.Char8
@@ -16,8 +18,12 @@ import           Data.Primitive
 import           Data.Record                      (Record (..), getCasedFields)
 import           Data.RecordIO
 
-data Class = Class { _fields :: [(String, Primitive)]
-                   , _name   :: String } deriving (Eq, Show)
+data Class =
+  Class
+    { _fields :: [(String, Primitive)]
+    , _name   :: String
+    }
+  deriving (Eq, Show)
 
 instance Record Class where
   recordCasing = pure UpperCamel
@@ -35,28 +41,20 @@ instance Record Class where
 
 getConstructor :: Class -> String
 getConstructor cls =
-  let
-    fieldMembers = getCasedFields cls ';' Nothing
-    constructorParams = getCasedFields cls ',' Nothing
-  in
-    "class "
-    ++ name cls
-    ++ " {\n    "
-    ++ fieldMembers
-    ++ ";\n    constructor("
-    ++ constructorParams
-    ++ ") {\n"
-    ++ getPropAssignments cls
-    ++ "    }\n}"
+  let fieldMembers = getCasedFields cls ';' Nothing
+      constructorParams = getCasedFields cls ',' Nothing
+   in "class " ++
+      name cls ++
+      " {\n    " ++
+      fieldMembers ++
+      ";\n    constructor(" ++
+      constructorParams ++ ") {\n" ++ getPropAssignments cls ++ "    }\n}"
 
 getPropAssignments :: Class -> String
 getPropAssignments cls =
-  let
-    mkAssignment :: (String, Primitive) -> String
-    mkAssignment fld =
-      "        this." ++ fst fld ++ " = " ++ fst fld ++ ";"
-  in
-    concatMap (++ "\n") $ mkAssignment <$> fields cls
+  let mkAssignment :: (String, Primitive) -> String
+      mkAssignment fld = "        this." ++ fst fld ++ " = " ++ fst fld ++ ";"
+   in concatMap (++ "\n") $ mkAssignment <$> fields cls
 
 -- | Parse blocks between pairs of {}, discarding what's in the middle
 blockParser :: Parser ByteString
@@ -65,7 +63,8 @@ blockParser = do
   _ <- many' letterOrDigit <* skipSpace
   char '{' *> skipSpace
   h <- takeTill (\x -> x == '{' || x == '}')
-  t <- pure <$> const "" <$> char '}' <* skipSpace <|>
+  t <-
+    pure <$> const "" <$> char '}' <* skipSpace <|>
     many1 blockParser <* skipSpace
   pure $ h <> mconcat t
 
@@ -77,7 +76,7 @@ fieldParser = do
   return (fieldName, fieldType)
 
 funcArgParser :: Parser (String, String)
-funcArgParser =  do
+funcArgParser = do
   skipMany space
   argName <- many' letterOrDigit <* skipSpace <* char ':'
   argType <- skipSpace *> many' letterOrDigit <* skipSpace
@@ -86,23 +85,19 @@ funcArgParser =  do
 funcParser :: Parser ()
 funcParser = do
   skipSpace
-  many' letterOrDigit
-    *> char '('
-    *> sepBy funcArgParser (char ',')
-    *> char ')'
-    *> blockParser
-    *> pure ()
+  many' letterOrDigit *> char '(' *> sepBy funcArgParser (char ',') *> char ')' *>
+    blockParser *>
+    pure ()
 
 classParser :: Parser Class
 classParser = do
   skipSpace
   className <- many' letterOrDigit <* skipSpace <* char '{' <* skipSpace
-  classFields <- many' ( many' funcParser
-                         *> skipSpace
-                         *> fieldParser
-                         <* skipSpace
-                         <* many' funcParser )
-                 <* skipSpace
+  classFields <-
+    many'
+      (many' funcParser *> skipSpace *> fieldParser <* skipSpace <*
+       many' funcParser) <*
+    skipSpace
   return $ Class classFields className
 
 parseField :: ByteString -> Either String (String, Primitive)

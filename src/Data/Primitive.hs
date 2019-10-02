@@ -1,9 +1,13 @@
-module Data.Primitive (Primitive (..), printer, tsPrinter) where
+module Data.Primitive
+  ( Primitive(..)
+  , printer
+  , tsPrinter
+  ) where
 
 import           Data.List (intersperse)
 
-data Primitive =
-  Int'
+data Primitive
+  = Int'
   | Double'
   | Float'
   | Char'
@@ -15,7 +19,8 @@ data Primitive =
   | List' Primitive
   | VendorHK String [Primitive]
   | Vendor String
-  | Any deriving (Eq)
+  | Any
+  deriving (Eq)
 
 tsPrinter :: Primitive -> String
 tsPrinter prim =
@@ -33,10 +38,7 @@ tsPrinter prim =
     List' p -> "Array<" ++ tsPrinter p ++ ">"
     Vendor s -> s
     VendorHK nm prims ->
-      nm
-      ++ "<"
-      ++ mconcat (intersperse ", " $ tsPrinter <$> prims)
-      ++ ">"
+      nm ++ "<" ++ mconcat (intersperse ", " $ tsPrinter <$> prims) ++ ">"
 
 printer :: String -> String -> Primitive -> String
 printer _ _ Int' = "Int"
@@ -48,16 +50,12 @@ printer _ _ Boolean' = "Boolean"
 printer _ _ Any = "Any"
 printer start end (Option' a) = "Option" ++ start ++ printer start end a ++ end
 printer start end (Either' e a) =
-  "Either"
-  ++ start
-  ++ printer start end e
-  ++ ", "
-  ++ printer start end a
-  ++ end
+  "Either" ++ start ++ printer start end e ++ ", " ++ printer start end a ++ end
 printer start end (IO' a) = "IO" ++ start ++ printer start end a ++ end
 printer start end (List' a) = "List" ++ start ++ printer start end a ++ end
 printer start end (VendorHK name prims) =
-  name ++ start ++ mconcat (intersperse ", " $ printer start end <$> prims) ++ end
+  name ++
+  start ++ mconcat (intersperse ", " $ printer start end <$> prims) ++ end
 printer _ _ (Vendor s) = s
 
 {-| Provide a show instance based on Scala's type parameter syntax -}

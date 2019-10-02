@@ -12,10 +12,11 @@ import           Data.Primitive
 -- | Record is a generic container for things that have constructors,
 -- have fields, and know things about the style patterns of the language
 -- that they're written in.
-class Record a where
+class Record a
   -- | How the record type constructor should be cased, e.g.,
   -- UpperCamel would indicate
   -- data FooBar
+  where
   recordCasing :: a -> Casing
   -- | How fields in this record should be cased, e.g.,
   -- Camel would indicate
@@ -41,15 +42,13 @@ class Record a where
   -- | How to throw away cruft before attempting to parse this record type
   cruft :: a -> Parser ()
   cruft a =
-    let
-      unconsed = uncons (constructorKeyword a)
-      sigil = constructorKeyword a
-    in
-      case unconsed of
-        Just (c, _) ->
-          skipWhile (/= c) *> (const () <$> string sigil <|> char c *> cruft a)
-        Nothing ->
-          pure ()
+    let unconsed = uncons (constructorKeyword a)
+        sigil = constructorKeyword a
+     in case unconsed of
+          Just (c, _) ->
+            skipWhile (/= c) *>
+            (const () <$> string sigil <|> char c *> cruft a)
+          Nothing -> pure ()
   -- | Carry around information about how to parse this record from source
   parser :: a -> Parser a
   -- | Carry around information about how to write this record to source
@@ -63,11 +62,8 @@ class Record a where
 -- change to support more languages
 getCasedFields :: Record b => b -> Char -> Maybe String -> String
 getCasedFields record sep leader =
-  let
-    caser field =
-      maybe "" (++ " ") leader
-      ++ reCase (fieldCasing record) Camel (fst field)
-      ++ ": "
-      ++ primitiveShow record (snd field)
-  in
-    mconcat . intersperse (sep : "\n    ") $ caser <$> (fields record)
+  let caser field =
+        maybe "" (++ " ") leader ++
+        reCase (fieldCasing record) Camel (fst field) ++
+        ": " ++ primitiveShow record (snd field)
+   in mconcat . intersperse (sep : "\n    ") $ caser <$> (fields record)

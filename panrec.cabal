@@ -34,11 +34,18 @@ executable panrec
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
+  other-modules:       Pipeline
   build-depends:       base
                      , panrec
                      , bytestring
+                     , containers
                      , optparse-applicative >= 0.14.3 && < 0.15.0
   default-language:    Haskell2010
+  default-extensions:  OverloadedStrings
+                     , AllowAmbiguousTypes
+                     , RankNTypes
+                     , ScopedTypeVariables
+                     , TypeApplications
 
 test-suite panrec-test
   type:                exitcode-stdio-1.0

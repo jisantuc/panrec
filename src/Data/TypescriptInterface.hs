@@ -1,5 +1,7 @@
-module Data.TypescriptInterface ( parseInterface
-                                , Interface(..) ) where
+module Data.TypescriptInterface
+  ( parseInterface
+  , Interface(..)
+  ) where
 
 import           Data.Attoparsec.ByteString.Char8
 import           Data.ByteString                  (ByteString)
@@ -10,8 +12,12 @@ import           Data.Primitive
 import           Data.Record                      (Record (..), getCasedFields)
 import           Data.RecordIO                    (writeRecords)
 
-data Interface = Interface { _fields :: [(String, Primitive)]
-                           , _name   :: String } deriving (Eq, Show)
+data Interface =
+  Interface
+    { _fields :: [(String, Primitive)]
+    , _name   :: String
+    }
+  deriving (Eq, Show)
 
 instance Record Interface where
   recordCasing = pure UpperCamel
@@ -29,14 +35,8 @@ instance Record Interface where
 
 getConstructor :: Interface -> String
 getConstructor interface =
-  let
-    fieldMembers = getCasedFields interface ';' (Just "readonly")
-  in
-      "interface "
-      ++ name interface
-      ++ " {\n    "
-      ++ fieldMembers
-      ++ ";\n}"
+  let fieldMembers = getCasedFields interface ';' (Just "readonly")
+   in "interface " ++ name interface ++ " {\n    " ++ fieldMembers ++ ";\n}"
 
 fieldParser :: Parser (String, Primitive)
 fieldParser = do
