@@ -1,12 +1,15 @@
 module Main where
 
-import qualified Data.ByteString     as BS
-import qualified Data.Map.Strict     as Map
-import           Data.Maybe          (fromMaybe)
-import           Data.Semigroup      ((<>))
+import qualified Data.ByteString       as BS
+import           Data.List             (isSuffixOf)
+import qualified Data.Map.Strict       as Map
+import           Data.Maybe            (fromMaybe)
+import           Data.Semigroup        ((<>))
 import           Options.Applicative
-import           Pipeline            (getPipeline)
-import           System.Exit         (ExitCode (..), exitWith)
+import           Pipeline              (getPipeline)
+import           System.Directory
+import           System.Exit           (ExitCode (..), exitWith)
+import           System.FilePath.Posix (pathSeparator, splitExtension)
 
 data Options =
   Options
@@ -34,14 +37,33 @@ fileExt =
 
 getOutFile :: FilePath -> String -> FilePath
 getOutFile inf lang =
-  takeWhile (/= '.') inf ++ fromMaybe ".unknown" (Map.lookup lang fileExt)
+  let newExt = fromMaybe ".unknown" (Map.lookup lang fileExt)
+      (base, _) = splitExtension inf
+   in base ++ newExt
 
-run :: Options -> IO ()
-run (Options inl outl inf) =
+runFile :: Options -> IO ()
+runFile (Options inl outl inf) =
   let outf = getOutFile inf outl
    in case getPipeline inl outl of
         Right f  -> BS.readFile inf >>= (\x -> f x outf)
         Left err -> print err *> exitWith (ExitFailure 1)
+
+run :: Options -> IO ()
+run opts@(Options inl _ inf) =
+  let extension = fromMaybe ".unknown" (Map.lookup inl fileExt)
+      getRelPath base f = base ++ [pathSeparator] ++ f
+   in do isRegularFile <- doesFileExist inf
+         if (not isRegularFile)
+           then const () <$> do
+                  dirContents <- listDirectory inf
+                  let absPaths = (getRelPath inf) <$> dirContents
+                  (\fp -> run (opts {inFile = fp})) `traverse` absPaths
+           else case (isSuffixOf extension inf) of
+                  True -> runFile opts
+                  False ->
+                    print
+                      ("Skipping " ++
+                       inf ++ " because it does not match " ++ extension)
 
 main :: IO ()
 main = run =<< execParser opts

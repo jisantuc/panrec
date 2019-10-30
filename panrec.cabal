@@ -39,6 +39,8 @@ executable panrec
                      , panrec
                      , bytestring
                      , containers
+                     , directory
+                     , filepath
                      , optparse-applicative >= 0.14.3 && < 0.15.0
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
