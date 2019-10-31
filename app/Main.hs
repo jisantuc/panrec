@@ -9,13 +9,15 @@ import           Options.Applicative
 import           Pipeline              (getPipeline)
 import           System.Directory
 import           System.Exit           (ExitCode (..), exitWith)
-import           System.FilePath.Posix (pathSeparator, splitExtension)
+import           System.FilePath.Posix (dropTrailingPathSeparator,
+                                        pathSeparator, takeBaseName)
 
 data Options =
   Options
     { inLanguage  :: String
     , outLanguage :: String
     , inFile      :: String
+    , outDir      :: String
     }
   deriving (Show)
 
@@ -28,42 +30,46 @@ options =
   strOption
     (long "out-language" <> short 'o' <> metavar "OUTLANGUAGE" <>
      help "Language of the output file ") <*>
-  argument str (metavar "INPUTFILE")
+  argument str (metavar "INPUTFILE") <*>
+  argument str (metavar "OUTPUTDIR")
 
 fileExt :: Map.Map String String
 fileExt =
   Map.fromList
     [("ts-interface", ".ts"), ("ts-class", ".ts"), ("scala", ".scala")]
 
-getOutFile :: FilePath -> String -> FilePath
-getOutFile inf lang =
+getOutFile :: FilePath -> FilePath -> String -> FilePath
+getOutFile inf outDirectory lang =
   let newExt = fromMaybe ".unknown" (Map.lookup lang fileExt)
-      (base, _) = splitExtension inf
-   in base ++ newExt
+      base = takeBaseName inf
+   in outDirectory ++ [pathSeparator] ++ base ++ newExt
 
 runFile :: Options -> IO ()
-runFile (Options inl outl inf) =
-  let outf = getOutFile inf outl
+runFile (Options inl outl inf outDirectory) =
+  let outf = getOutFile inf outDirectory outl
    in case getPipeline inl outl of
         Right f  -> BS.readFile inf >>= (\x -> f x outf)
         Left err -> print err *> exitWith (ExitFailure 1)
 
 run :: Options -> IO ()
-run opts@(Options inl _ inf) =
+run opts@(Options inl _ inf outDirectory) =
   let extension = fromMaybe ".unknown" (Map.lookup inl fileExt)
       getRelPath base f = base ++ [pathSeparator] ++ f
-   in do isRegularFile <- doesFileExist inf
+      cleanOutDir = dropTrailingPathSeparator outDirectory
+      cleanInf = dropTrailingPathSeparator inf
+   in do isRegularFile <- doesFileExist cleanInf
          if (not isRegularFile)
            then const () <$> do
-                  dirContents <- listDirectory inf
-                  let absPaths = (getRelPath inf) <$> dirContents
-                  (\fp -> run (opts {inFile = fp})) `traverse` absPaths
-           else case (isSuffixOf extension inf) of
-                  True -> runFile opts
+                  dirContents <- listDirectory cleanInf
+                  let absPaths = (getRelPath cleanInf) <$> dirContents
+                  (\fp -> run (opts {inFile = fp, outDir = cleanOutDir})) `traverse`
+                    absPaths
+           else case (isSuffixOf extension cleanInf) of
+                  True -> runFile opts {inFile = cleanInf, outDir = cleanOutDir}
                   False ->
                     print
                       ("Skipping " ++
-                       inf ++ " because it does not match " ++ extension)
+                       cleanInf ++ " because it does not match " ++ extension)
 
 main :: IO ()
 main = run =<< execParser opts
