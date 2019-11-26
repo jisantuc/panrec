@@ -1,13 +1,13 @@
 name:                panrec
-version:             0.1.0.0
+version:             0.1.0
 -- synopsis:
 -- description:
 homepage:            https://github.com/githubuser/panrec#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2019 Author name here
+author:              James Santucci
+maintainer:          jsantucci@azavea.com
+copyright:           2019 James Santucci
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
