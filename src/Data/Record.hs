@@ -1,20 +1,22 @@
 module Data.Record where
 
-data Casing = Camel
-  | UpperCamel
-  | Snake
-  | UpperSnake
-  | Upper
-  | Lower
-  deriving (Eq, Show)
+import           Control.Applicative              ((<|>))
+import           Data.Attoparsec.ByteString.Char8
+import           Data.ByteString                  (ByteString)
+import           Data.ByteString.Char8            (uncons)
+import           Data.Casing
+import           Data.List                        (intersperse)
+import           Data.Maybe                       (maybe)
+import           Data.Primitive
 
 -- | Record is a generic container for things that have constructors,
 -- have fields, and know things about the style patterns of the language
 -- that they're written in.
-class Record a where
+class Record a
   -- | How the record type constructor should be cased, e.g.,
   -- UpperCamel would indicate
   -- data FooBar
+  where
   recordCasing :: a -> Casing
   -- | How fields in this record should be cased, e.g.,
   -- Camel would indicate
@@ -22,26 +24,46 @@ class Record a where
   -- while Snake would indicate
   -- data Foo = Foo { foo_bar :: Int, ... }
   fieldCasing :: a -> Casing
-  -- | The keyword and syntax around this record type, e.g.,
-  -- data Foo = Foo { bar :: Int, ... }
-  constructor :: a -> String -> String
+  -- | The string that indicates that a definition of this record type
+  -- has begun
+  constructorKeyword :: a -> ByteString
+  -- | Write this record into the syntax appropriate for its language
+  constructor :: a -> String
   -- | Whether this record type includes type information
   typing :: a -> Bool
   -- | Records must provide a way to access their fields
-  fields :: a -> [String]
+  fields :: a -> [(String, Primitive)]
+  -- | Records must provide a way to access their names
+  name :: a -> String
   -- | Build this type from another record
   fromRecord :: Record b => b -> a
+  -- | Print primitives as types native to this language
+  primitiveShow :: a -> Primitive -> String
+  -- | How to throw away cruft before attempting to parse this record type
+  cruft :: a -> Parser ()
+  cruft a =
+    let unconsed = uncons (constructorKeyword a)
+        sigil = constructorKeyword a
+     in case unconsed of
+          Just (c, _) ->
+            skipWhile (/= c) *>
+            (const () <$> string sigil <|> char c *> cruft a)
+          Nothing -> pure ()
+  -- | Carry around information about how to parse this record from source
+  parser :: a -> Parser a
+  -- | Carry around information about how to write this record to source
+  writer :: a -> FilePath -> [a] -> IO ()
+  -- | Provide an empty value to apply other functions to
+  emptyR :: a
 
--- | With a particular casing style, create a single string from
--- the component parts of a string
-caseParts :: Casing -> [String] -> String
-caseParts = undefined
-
--- | With a particular casing style, split a single string into
--- its component parts
-splitStringParts :: Casing -> String -> [String]
-splitStringParts = undefined
-
--- | Translate a string in one casing into a string in another
-reCase :: Casing -> Casing -> String -> String
-reCase casingIn casingOut = caseParts casingOut . splitStringParts casingIn
+-- | Get fields for this record type with their types
+-- Currently this assumes that you want Scala, Python3, or TypeScript-style
+-- type annotations (single :, a space, and the type name). That will have to
+-- change to support more languages
+getCasedFields :: Record b => b -> Char -> Maybe String -> String
+getCasedFields record sep leader =
+  let caser field =
+        maybe "" (++ " ") leader ++
+        reCase (fieldCasing record) Camel (fst field) ++
+        ": " ++ primitiveShow record (snd field)
+   in mconcat . intersperse (sep : "\n    ") $ caser <$> (fields record)
