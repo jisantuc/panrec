@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.1.2] - 2019-11-26
+
+### Fixed
+
+- Only publish images from master
+
 ## [0.1.1] - 2019-11-26
 
 ### Fixed
