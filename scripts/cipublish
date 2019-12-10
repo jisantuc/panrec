@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${PANREC_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+    echo -n \
+        "Usage: $(basename "$0")
+Publish docker image to Docker Hub
+"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    if [[ "${1:-}" == "--help" ]]; then
+        usage
+    else
+        echo "Publishing image to Docker Hub"
+	GIT_SHA=$(git rev-parse --short HEAD)
+	docker login --username "${DOCKER_USER}" --password "${DOCKER_PASS}"
+	docker tag jisantuc/panrec jisantuc/panrec:"${GIT_SHA}"
+	docker push jisantuc/panrec:"${GIT_SHA}"
+	docker tag jisantuc/panrec jisantuc/panrec:latest
+	docker push jisantuc/panrec:latest
+    fi
+fi

@@ -87,3 +87,11 @@ Workflow for adding a new record type, let's say for python, would be something 
 - add a `Record` typeclass for your `Class` data type
 - `stack build --file-watch`, and keep going until the compiler is happy
 - add some tests of Python `Class`es that you'd expect to parse correctly
+
+# Publication
+
+A docker container with `panrec` as its entrypoint is published under `jisantuc/panrec`.
+Because I did a bad job at yaml / reading CircleCI docs, publication is ad hoc and manual,
+though I will make sure to publish for all tags that get pushed. An improved publication flow
+(e.g. publication for every successful `develop` / tagged build) will be contingent on getting
+use out of this CLI in a practical environment.
