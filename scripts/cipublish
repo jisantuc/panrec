@@ -18,6 +18,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         usage
     else
         echo "Publishing image to Docker Hub"
+	echo "Circle tag:"
+	echo "${CIRCLE_TAG}"
 	docker login --username "${DOCKER_USER}" --password "${DOCKER_PASS}"
 	docker tag jisantuc/panrec jisantuc/panrec:"${CIRCLE_TAG}"
 	docker push jisantuc/panrec:"${CIRCLE_TAG}"

@@ -43,9 +43,6 @@ jobs:
       - attach_workspace:
           at: /root/project
       - run:
-          name: Echo directory contents after attaching
-          command: ls
-      - run:
           name: Build docker image
           command: docker build -t jisantuc/panrec ./
       - run:
