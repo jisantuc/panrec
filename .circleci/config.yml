@@ -52,9 +52,6 @@ jobs:
           name: Publish images
           command: |
             docker login --username $DOCKER_USER --password $DOCKER_PASS
-            IMAGE_TAG=${CIRCLE_TAG/v/''}
-            docker tag jisantuc/panrec jisantuc/panrec:$IMAGE_TAG
-            docker push jisantuc/panrec:$IMAGE_TAG
             docker tag jisantuc/panrec jisantuc/panrec:latest
             docker push jisantuc/panrec:latest
 
