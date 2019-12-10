@@ -50,10 +50,7 @@ jobs:
           command: docker build -t jisantuc/panrec ./
       - run:
           name: Publish images
-          command: |
-            docker login --username $DOCKER_USER --password $DOCKER_PASS
-            docker tag jisantuc/panrec jisantuc/panrec:latest
-            docker push jisantuc/panrec:latest
+          command: ./scripts/cipublish
 
 workflows:
   version: 2
