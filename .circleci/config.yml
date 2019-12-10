@@ -69,7 +69,7 @@ workflows:
           filters:
             tags:
               only:
-                - /^(.*)/
+                - /^v(.*)/
             branches:
               only:
-                - /^(.*)/
+                - feature/js/publish-on-all-tagged-commits
