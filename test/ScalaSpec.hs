@@ -48,11 +48,17 @@ scalaSpec = do
            , ("z", Option' (Either' String' (Vendor "java.util.UUID")))
            ]
            "Foo")
+    it "should read a scala case class correctly that extends something" $ do
+      Scala.parseRecord exampleCaseClassWithExtension `shouldBe`
+        (Right $
+         Scala.CaseClass
+           [("x", Option' $ VendorHK "Projected" [Vendor "Geometry"])]
+           "Foo")
     it "should parse several case classes when separated by cruft" $ do
       parseRecords (emptyR :: Scala.CaseClass) exampleSeveralCaseClasses `shouldBe`
         Right
           [ Scala.CaseClass [("x", Int'), ("y", Int')] "Foo"
-          , Scala.CaseClass [("x", String')] "Bar"
+          , Scala.CaseClass [("_x", String')] "Bar"
           ]
 
 exampleCaseClassReturns :: ByteString
@@ -89,10 +95,10 @@ fieldWithExoticHKT = "x: Option[Projected[Geometry]],"
 
 exampleSeveralCaseClasses :: ByteString
 exampleSeveralCaseClasses =
-  [r|case class Foo(x: Int, y: Int)
+  [r|case class Foo(x: Int, y: Int) extends Product with Serializable
 
 object Foo {
-  case class Bar(x: String)
+  case class Bar(_x: String)
 }|]
 
 exampleCaseClassWithExoticHKT :: ByteString
@@ -110,3 +116,10 @@ exampleCaseClassWithDefaultArgs =
   z: Option[Either[String, java.util.UUID]] = Some(Left("lol"))
 )
 |]
+
+exampleCaseClassWithExtension :: ByteString
+exampleCaseClassWithExtension =
+  [r| Foo(
+    x: Option[Projected[Geometry]] = None
+  ) extends Product with Serializable
+  |]

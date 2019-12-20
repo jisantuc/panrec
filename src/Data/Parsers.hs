@@ -8,6 +8,9 @@ import           Data.Primitive
 letterOrDigit :: Parser Char
 letterOrDigit = letter_ascii <|> digit
 
+fieldNameParser :: Parser String
+fieldNameParser = many1' $ letterOrDigit <|> char '_'
+
 endOfLineOrSpace :: Parser Char
 endOfLineOrSpace = (pure ' ' <$> endOfLine) <|> space
 

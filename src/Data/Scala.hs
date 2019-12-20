@@ -60,10 +60,10 @@ fieldParser :: Parser (String, Primitive)
 fieldParser = do
   skipSpace
   fieldName <-
-    many' letterOrDigit <* try (many' space) <* char ':' <* try (many' space)
+    fieldNameParser <* try (many' space) <* char ':' <* try (many' space)
   fieldType <-
     primParser <* skipMany defaultArgParser <*
-    (char ',' <|> (many' endOfLineOrSpace *> char ')'))
+    (const () <$> char ',' <|> skipSpace)
   return (fieldName, fieldType)
 
 primParser :: Parser Primitive
@@ -79,6 +79,7 @@ primParser =
   (primParser <* char ']') <|>
   IO' <$> (string "IO[" *> primParser <* char ']') <|>
   List' <$> (string "List[" *> primParser <* char ']') <|>
+  List' <$> (string "Seq[" *> primParser <* char ']') <|>
   VendorHK <$> (many' letterOrDigit) <* char '[' <*>
   sepBy primParser (char ',' <* skipSpace) <*
   char ']' <|>
@@ -87,13 +88,18 @@ primParser =
 primitivePrinter :: Primitive -> String
 primitivePrinter = printer "[" "]"
 
+extensionParser :: Parser ()
+extensionParser =
+  string "extends" *> primParser *> skipSpace *>
+  skipMany (string "with" *> skipSpace *> primParser *> skipSpace)
+
 caseClassParser :: Parser CaseClass
 caseClassParser = do
   recordName <- skipSpace *> many' letterOrDigit
   _ <- char '('
   skipSpace
   recordFields <- many' fieldParser
-  endOfLine
+  skipSpace <* char ')' <* (extensionParser <|> pure ())
   return $ CaseClass recordFields recordName
 
 parseField :: ByteString -> Either String (String, Primitive)
