@@ -1,22 +1,20 @@
 module Data.Record where
 
-import           Control.Applicative              ((<|>))
+import           Control.Applicative            ( (<|>) )
 import           Data.Attoparsec.ByteString.Char8
-import           Data.ByteString                  (ByteString)
-import           Data.ByteString.Char8            (uncons)
+import           Data.ByteString                ( ByteString )
+import           Data.ByteString.Char8          ( uncons )
 import           Data.Casing
-import           Data.List                        (intersperse)
-import           Data.Maybe                       (maybe)
+import           Data.List                      ( intersperse )
 import           Data.Primitive
 
 -- | Record is a generic container for things that have constructors,
 -- have fields, and know things about the style patterns of the language
 -- that they're written in.
-class Record a
+class Record a where
   -- | How the record type constructor should be cased, e.g.,
   -- UpperCamel would indicate
   -- data FooBar
-  where
   recordCasing :: a -> Casing
   -- | How fields in this record should be cased, e.g.,
   -- Camel would indicate
@@ -63,7 +61,8 @@ class Record a
 getCasedFields :: Record b => b -> Char -> Maybe String -> String
 getCasedFields record sep leader =
   let caser field =
-        maybe "" (++ " ") leader ++
-        reCase (fieldCasing record) Camel (fst field) ++
-        ": " ++ primitiveShow record (snd field)
-   in mconcat . intersperse (sep : "\n    ") $ caser <$> (fields record)
+          maybe "" (++ " ") leader
+            ++ reCase (fieldCasing record) Camel (fst field)
+            ++ ": "
+            ++ primitiveShow record (snd field)
+  in  mconcat . intersperse (sep : "\n    ") $ caser <$> (fields record)

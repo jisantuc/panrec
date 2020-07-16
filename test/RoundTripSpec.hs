@@ -1,10 +1,11 @@
 module RoundTripSpec
   ( roundTripSpec
-  ) where
+  )
+where
 
 import           Data.Record
-import qualified Data.Scala      as Scala
-import qualified Data.Typescript as TS
+import qualified Data.Scala                    as Scala
+import qualified Data.Typescript               as TS
 import           Test.Hspec
 import           Test.QuickCheck
 import           Types

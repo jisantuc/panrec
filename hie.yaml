@@ -1,0 +1,13 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "panrec:lib"
+
+    - path: "./app/Main.hs"
+      component: "panrec:exe:panrec"
+
+    - path: "./app/Pipeline.hs"
+      component: "panrec:exe:panrec"
+
+    - path: "./test"
+      component: "panrec:test:panrec-test"

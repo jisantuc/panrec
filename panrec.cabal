@@ -24,7 +24,7 @@ library
                      , Data.Scala
                      , Data.Typescript
                      , Data.TypescriptInterface
-  build-depends:       base >= 4.7 && < 5
+  build-depends:       base >= 4.13 && < 5
                      , attoparsec
                      , bytestring
   default-language:    Haskell2010
@@ -41,7 +41,7 @@ executable panrec
                      , containers
                      , directory
                      , filepath
-                     , optparse-applicative >= 0.14.3 && < 0.15.0
+                     , optparse-applicative
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
                      , AllowAmbiguousTypes
